@@ -2,7 +2,7 @@
 include('modules/koneksi.php');
 session_start();
 
-// Inisialisasi variabel untuk nilai default
+
 $id_mobil = '';
 $no_polisi = '';
 $nama = '';
@@ -10,7 +10,7 @@ $kategori_id = '';
 $warna = '';
 $tahun = '';
 
-// Ambil data mobil berdasarkan ID untuk diedit
+
 if (isset($_GET['id'])) {
     $id_mobil = mysqli_real_escape_string($con, $_GET['id']);
     $query = "SELECT * FROM mobil WHERE id=?";
@@ -33,10 +33,10 @@ if (isset($_GET['id'])) {
     }
 }
 
-// Simpan nilai awal nomor polisi sebelum proses update
+
 $old_no_polisi = $no_polisi;
 
-// Proses update data
+
 if (isset($_POST['update'])) {
     $id = mysqli_real_escape_string($con, $_POST['id']);
     $no_polisi = mysqli_real_escape_string($con, $_POST['no_polisi']);
@@ -45,7 +45,7 @@ if (isset($_POST['update'])) {
     $warna = mysqli_real_escape_string($con, $_POST['warna']);
     $tahun = mysqli_real_escape_string($con, $_POST['tahun']);
 
-    // Validasi jika ada field yang kosong
+
     if (empty($no_polisi) || empty($nama) || empty($kategori_id) || empty($warna) || empty($tahun)) {
         $_SESSION['error_message'] = "Silakan lengkapi semua field yang diperlukan.";
     } else {

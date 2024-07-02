@@ -23,27 +23,33 @@
     </style>
 
     <?php
+    if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
+        $id = $_GET['id'];
 
-    try {
-        if(isset($_GET['action']) && isset($_GET['id']))
-        {
-            $id = $_GET['id'];
-            $result = mysqli_query($con, "DELETE FROM supir WHERE id='$id'");
+        // Check if the driver is related to other tables
+        try {
+            $delete_query = "DELETE FROM supir WHERE id='$id'";
+            if (mysqli_query($con, $delete_query)) {
+                $_SESSION['success_message'] = 'Data supir berhasil dihapus.';
+            } else {
+                $_SESSION['error_message'] = 'Gagal menghapus data supir karena data masih terkait di tabel yang lain.';
+            }
+        } catch (mysqli_sql_exception $e) { 
+            $_SESSION['error_message'] = 'Gagal menghapus data supir karena data masih terkait di tabel yang lain.';
         }
 
-    } catch (mysqli_sql_exception $e) { 
-        echo "<script>alert('gagal menghapus data karena data masih terkait di tabel yang lain')</script>";
+        header("Location: supir.php");
+        exit();
     }
-        
-        $data = null;
-        
-        if(isset($_GET['search']))
-        {
-            $search = mysqli_real_escape_string($con, $_GET['search']);
-            $data = mysqli_query($con, "SELECT * FROM supir WHERE nama LIKE '%$search%' OR telp LIKE '%$search%'");
-        } else {
-            $data = mysqli_query($con, "SELECT * FROM supir");
-        }
+    
+    $data = null;
+
+    if (isset($_GET['search'])) {
+        $search = mysqli_real_escape_string($con, $_GET['search']);
+        $data = mysqli_query($con, "SELECT * FROM supir WHERE nama LIKE '%$search%' OR telp LIKE '%$search%'");
+    } else {
+        $data = mysqli_query($con, "SELECT * FROM supir");
+    }
     ?>
     <div class="wrapper">
         <?php include('components/sidebar.php') ?>
@@ -55,7 +61,7 @@
                     <div class="card-body">
                         <h4 class="card-title">Data Supir</h4>
 
-                        <?php if(isset($_SESSION['success_message'])): ?>
+                        <?php if (isset($_SESSION['success_message'])): ?>
                             <div class="alert alert-success">
                                 <a href="" type="button" class="close" data-dismiss="alert" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
@@ -63,6 +69,16 @@
                                 <?php echo $_SESSION['success_message']; ?>
                             </div>
                             <?php unset($_SESSION['success_message']); ?>
+                        <?php endif; ?>
+
+                        <?php if (isset($_SESSION['error_message'])): ?>
+                            <div class="alert alert-danger">
+                                <a href="" type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </a>
+                                <?php echo $_SESSION['error_message']; ?>
+                            </div>
+                            <?php unset($_SESSION['error_message']); ?>
                         <?php endif; ?>
 
                         <div class="d-flex justify-content-between">
@@ -78,7 +94,7 @@
                             <table class="table table-flush">
                                 <thead>
                                     <tr>
-                                        <th>Nama</th>
+                                        <th>Nama Lengkap</th>
                                         <th>Alamat</th>
                                         <th>Tanggal Lahir</th>
                                         <th>Telepon</th>

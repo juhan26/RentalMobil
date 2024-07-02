@@ -97,6 +97,12 @@
                 <div class="card shadow-sm rounded">
                     <div class="card-body">
                         <h4 class="card-title">Form Petugas</h4>
+                        <?php if(isset($_SESSION['error_message'])): ?>
+                            <div class="alert alert-danger mt-2">
+                                <?php echo $_SESSION['error_message']; ?>
+                            </div>
+                            <?php unset($_SESSION['error_message']); ?>
+                        <?php endif; ?>
                         <p class="text-muted">Edit data Petugas</p>
                         <form action="editpetugas.php" method="POST">
                             <input type="hidden" name="id" value="<?php echo htmlspecialchars($id); ?>">
@@ -117,12 +123,6 @@
                                 <a href="petugas.php" type="button" class="btn btn-secondary">Back</a>
                             </div>
                         </form>
-                        <?php if(isset($_SESSION['error_message'])): ?>
-                            <div class="alert alert-danger mt-2">
-                                <?php echo $_SESSION['error_message']; ?>
-                            </div>
-                            <?php unset($_SESSION['error_message']); ?>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>

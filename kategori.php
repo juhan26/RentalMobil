@@ -1,46 +1,39 @@
 <?php
 include('modules/koneksi.php');
-
 session_start();
 
-// Ambil pesan error jika ada
 $error_message = isset($_SESSION['error_message']) ? $_SESSION['error_message'] : '';
 $success_message = isset($_SESSION['success_message']) ? $_SESSION['success_message'] : '';
-unset($_SESSION['error_message']); 
-unset($_SESSION['success_message']); 
-
+unset($_SESSION['error_message']);
+unset($_SESSION['success_message']);
 
 try {
-    
-if (isset($_GET['hapus'])) {
-    $kategori_id = $_GET['hapus'];
+    if (isset($_GET['hapus'])) {
+        $kategori_id = mysqli_real_escape_string($con, $_GET['hapus']);
 
+        $query_cek_kategori = "SELECT * FROM kategori WHERE id = $kategori_id";
+        $result_cek_kategori = mysqli_query($con, $query_cek_kategori);
 
-    $query_cek_kategori = "SELECT * FROM kategori WHERE id = $kategori_id";
-    $result_cek_kategori = mysqli_query($con, $query_cek_kategori);
-
-    if (mysqli_num_rows($result_cek_kategori) == 1) {
-        
-        $query_hapus_kategori = "DELETE FROM kategori WHERE id = $kategori_id";
-        if (mysqli_query($con, $query_hapus_kategori)) {
-            $_SESSION['success_message'] = "Kategori berhasil dihapus.";
+        if (mysqli_num_rows($result_cek_kategori) == 1) {
+            $query_hapus_kategori = "DELETE FROM kategori WHERE id = $kategori_id";
+            if (mysqli_query($con, $query_hapus_kategori)) {
+                $_SESSION['success_message'] = "Kategori berhasil dihapus.";
+            } else {
+                $_SESSION['error_message'] = "Error: Gagal menghapus kategori. " . mysqli_error($con);
+            }
         } else {
-            $_SESSION['error_message'] = "Error: " . mysqli_error($con);
+            $_SESSION['error_message'] = "Kategori tidak ditemukan.";
         }
-    } else {
-        $_SESSION['error_message'] = "Kategori tidak ditemukan.";
-    }
 
-    // Redirect kembali ke halaman kategori setelah menghapus
+        header("Location: kategori.php");
+        exit();
+    }
+} catch (mysqli_sql_exception $e) {
+    $_SESSION['error_message'] = "Gagal menghapus data kategori karena data masih terkait di tabel yang lain.";
     header("Location: kategori.php");
     exit();
 }
-} catch (mysqli_sql_exception $e) { 
-    echo "<script>alert('gagal menghapus data karena data masih terkait di tabel yang lain')</script>";
-}
 
-
-// Query untuk mengambil semua data kategori
 $query_kategori = "SELECT * FROM kategori";
 $result_kategori = mysqli_query($con, $query_kategori);
 ?>
@@ -71,8 +64,8 @@ $result_kategori = mysqli_query($con, $query_kategori);
                         <?php if (!empty($success_message)): ?>
                             <div class="alert alert-success"><?php echo $success_message; ?></div>
                         <?php endif; ?>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
+                        <div class="table-responsive mt-4">
+                            <table class="table table-flush">
                                 <thead>
                                     <tr>
                                         <th>No.</th>
@@ -83,7 +76,7 @@ $result_kategori = mysqli_query($con, $query_kategori);
                                 <tbody>
                                     <?php
                                     $no = 1;
-                                     while ($row = mysqli_fetch_assoc($result_kategori)): ?>
+                                    while ($row = mysqli_fetch_assoc($result_kategori)): ?>
                                         <tr>
                                             <td><?php echo $no++; ?></td>
                                             <td><?php echo $row['nama']; ?></td>

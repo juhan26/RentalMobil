@@ -14,30 +14,40 @@
 
 <body>
     <?php
-    try {
-        if (isset($_GET['action']) && isset($_GET['id'])) {
-            $id = $_GET['id'];
-            $result = mysqli_query($con, "DELETE FROM mobil WHERE id='$id'");
+    if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
+        $id = $_GET['id'];
+
+        // Check if the car is related to other tables
+        try {
+            $delete_query = "DELETE FROM mobil WHERE id='$id'";
+            if (mysqli_query($con, $delete_query)) {
+                $_SESSION['success_message'] = 'Data mobil berhasil dihapus.';
+            } else {
+                $_SESSION['error_message'] = 'Gagal menghapus data mobil karena data masih terkait di tabel yang lain.';
+            }
+        } catch (mysqli_sql_exception $e) { 
+            $_SESSION['error_message'] = 'Gagal menghapus data mobil karena data masih terkait di tabel yang lain.';
         }
-    } catch (mysqli_sql_exception $e) { 
-        echo "<script>alert('gagal menghapus data karena data masih terkait di tabel yang lain')</script>";
+
+        header("Location: mobil.php");
+        exit();
     }
 
-        $data = null;
+    $data = null;
 
-        if (isset($_GET['search'])) {
-            $search = mysqli_real_escape_string($con, $_GET['search']);
-            $data = mysqli_query($con, "SELECT mobil.*, kategori.nama AS namak 
-                                        FROM mobil 
-                                        INNER JOIN kategori ON mobil.kategori_id = kategori.id
-                                        WHERE mobil.nama LIKE '%$search%' 
-                                        OR mobil.no_polisi LIKE '%$search%' 
-                                        OR kategori.nama LIKE '%$search%'");
-        } else {
-            $data = mysqli_query($con, "SELECT mobil.*, kategori.nama AS namak 
-                                        FROM mobil 
-                                        INNER JOIN kategori ON mobil.kategori_id = kategori.id");
-        }
+    if (isset($_GET['search'])) {
+        $search = mysqli_real_escape_string($con, $_GET['search']);
+        $data = mysqli_query($con, "SELECT mobil.*, kategori.nama AS namak 
+                                    FROM mobil 
+                                    INNER JOIN kategori ON mobil.kategori_id = kategori.id
+                                    WHERE mobil.nama LIKE '%$search%' 
+                                    OR mobil.no_polisi LIKE '%$search%' 
+                                    OR kategori.nama LIKE '%$search%'");
+    } else {
+        $data = mysqli_query($con, "SELECT mobil.*, kategori.nama AS namak 
+                                    FROM mobil 
+                                    INNER JOIN kategori ON mobil.kategori_id = kategori.id");
+    }
     ?>
     <div class="wrapper">
         <?php include('components/sidebar.php') ?>
@@ -45,7 +55,6 @@
         <div id="content">
             <?php include('components/navbar.php') ?>
             <div id="content-wrapper">
-                <?php include('components/alert.php') ?>
                 <div class="card shadow-sm rounded">
                     <div class="card-body">
                         <h4 class="card-title">Data Mobil</h4>
@@ -58,6 +67,16 @@
                                 <?php echo $_SESSION['success_message']; ?>
                             </div>
                             <?php unset($_SESSION['success_message']); ?>
+                        <?php endif; ?>
+
+                        <?php if (isset($_SESSION['error_message'])): ?>
+                            <div class="alert alert-danger">
+                                <a href="" type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </a>
+                                <?php echo $_SESSION['error_message']; ?>
+                            </div>
+                            <?php unset($_SESSION['error_message']); ?>
                         <?php endif; ?>
 
                         <div class="d-flex justify-content-between">

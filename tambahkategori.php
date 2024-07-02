@@ -10,7 +10,7 @@ unset($_SESSION['error_message']);
 unset($_SESSION['success_message']); 
 
 try {
-    //code...
+
     if (isset($_POST['submit_tambah'])) {
         $nama_kategori = mysqli_real_escape_string($con, $_POST['nama_kategori']);
     
@@ -74,7 +74,7 @@ try {
                         <form method="post">
                             <div class="mb-3">
                                 <label for="nama_kategori" class="form-label">Nama Kategori</label>
-                                <input type="text" class="form-control" id="nama_kategori" name="nama_kategori" required>
+                                <input type="text" class="form-control" id="nama_kategori" name="nama_kategori" >
                             </div>
                             <button type="submit" name="submit_tambah" class="btn btn-primary">Tambah Kategori</button>
                         </form>

@@ -1,61 +1,12 @@
 <?php
 include('modules/koneksi.php');
-
 session_start();
 
 $error_message = isset($_SESSION['error_message']) ? $_SESSION['error_message'] : '';
 $success_message = isset($_SESSION['success_message']) ? $_SESSION['success_message'] : '';
+
 unset($_SESSION['error_message']);
 unset($_SESSION['success_message']);
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $mobil_id = mysqli_real_escape_string($con, $_POST['mobil_id']);
-    $depot_id = mysqli_real_escape_string($con, $_POST['depot_id']);
-    $supir_id = mysqli_real_escape_string($con, $_POST['supir_id']);
-    $petugas_id = mysqli_real_escape_string($con, $_POST['petugas_id']);
-    $tanggal_pinjam = mysqli_real_escape_string($con, $_POST['tanggal_pinjam']);
-    $tanggal_kembali = mysqli_real_escape_string($con, $_POST['tanggal_kembali']);
-    $status = 'disewa';
-
-try{
-    if (empty($mobil_id) || empty($depot_id) || empty($supir_id) || empty($petugas_id) || empty($tanggal_pinjam) || empty($tanggal_kembali)) {
-        $_SESSION['error_message'] = "Semua field harus diisi.";
-    } elseif (strtotime($tanggal_pinjam) > strtotime($tanggal_kembali)) {
-        $_SESSION['error_message'] = "Tanggal pinjam tidak boleh lebih besar dari tanggal kembali.";
-    } else {
-        $query = "INSERT INTO transaksi (mobil_id, depot_id, supir_id, petugas_id, tanggal_pinjam, tanggal_kembali, status) 
-                  VALUES ('$mobil_id', '$depot_id', '$supir_id', '$petugas_id', '$tanggal_pinjam', '$tanggal_kembali', '$status')";
-
-        if (mysqli_query($con, $query)) {
-            $_SESSION['success_message'] = "Transaksi berhasil ditambahkan.";
-            header("Location: transaksi.php");
-            exit;
-        } else {
-            $_SESSION['error_message'] = "Error: " . mysqli_error($con);
-        }
-    }
-
-    header("Location: tambahtransaksi.php");
-    exit();
-}catch (mysqli_sql_exception $e) {
-    $errorMessage = null;
-    if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-        if (strpos($e->getMessage(), 'mobil_id') !== false) {
-            $errorMessage = "data mobil telah ada sebelumnya";
-        } elseif (strpos($e->getMessage(), 'supir_id') !== false) {
-            $errorMessage = "data supir telah ada sebelumnya";
-        }
-    }
-
-    if ($errorMessage === null) {
-        $errorMessage = "An unexpected error occurred: " . $e->getMessage();
-    }
-
-    $_SESSION['error_message'] = $errorMessage;
-    header("Location: tambahtransaksi.php");
-    exit();
-}
-}
 
 $query_mobil = "SELECT * FROM mobil";
 $result_mobil = mysqli_query($con, $query_mobil);
@@ -69,6 +20,49 @@ $result_supir = mysqli_query($con, $query_supir);
 $query_petugas = "SELECT * FROM petugas";
 $result_petugas = mysqli_query($con, $query_petugas);
 
+$mobil_id = '';
+$depot_id = '';
+$supir_id = '';
+$petugas_id = '';
+$tanggal_pinjam = '';
+$tanggal_kembali = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+    $mobil_id = mysqli_real_escape_string($con, $_POST['mobil_id']);
+    $depot_id = mysqli_real_escape_string($con, $_POST['depot_id']);
+    $supir_id = mysqli_real_escape_string($con, $_POST['supir_id']);
+    $petugas_id = mysqli_real_escape_string($con, $_POST['petugas_id']);
+    $tanggal_pinjam = mysqli_real_escape_string($con, $_POST['tanggal_pinjam']);
+    $tanggal_kembali = mysqli_real_escape_string($con, $_POST['tanggal_kembali']);
+
+    // Validasi form
+    if (empty($mobil_id) || empty($depot_id) || empty($supir_id) || empty($petugas_id) || empty($tanggal_pinjam) || empty($tanggal_kembali)) {
+        $_SESSION['error_message'] = "Semua field harus diisi.";
+    } elseif (strtotime($tanggal_kembali) <= strtotime($tanggal_pinjam)) {
+        $_SESSION['error_message'] = "Tanggal kembali harus setelah tanggal pinjam.";
+    } else {
+        // Lakukan insert data transaksi ke database
+        $insert_query = "INSERT INTO transaksi (mobil_id, depot_id, supir_id, petugas_id, tanggal_pinjam, tanggal_kembali) 
+                        VALUES ('$mobil_id', '$depot_id', '$supir_id', '$petugas_id', '$tanggal_pinjam', '$tanggal_kembali')";
+        
+        if (mysqli_query($con, $insert_query)) {
+            $_SESSION['success_message'] = "Data transaksi berhasil ditambahkan.";
+            header('Location: transaksi.php');
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Terjadi kesalahan saat menambahkan data transaksi: " . mysqli_error($con);
+        }
+    }
+
+    // Tetapkan nilai input kembali untuk form
+    $mobil_id = $_POST['mobil_id'];
+    $depot_id = $_POST['depot_id'];
+    $supir_id = $_POST['supir_id'];
+    $petugas_id = $_POST['petugas_id'];
+    $tanggal_pinjam = $_POST['tanggal_pinjam'];
+    $tanggal_kembali = $_POST['tanggal_kembali'];
+}
 ?>
 
 <!DOCTYPE html>
@@ -76,7 +70,7 @@ $result_petugas = mysqli_query($con, $query_petugas);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rental Mobil Juodge - Penyewaan Mobil</title>
+    <title>Tambah Transaksi</title>
     <?php include('components/dependencies.php'); ?>
 </head>
 <body>
@@ -85,62 +79,69 @@ $result_petugas = mysqli_query($con, $query_petugas);
         <div id="content">
             <?php include('components/navbar.php'); ?>
             <div id="content-wrapper">
-                <?php include('components/alert.php'); ?>
                 <div class="card shadow-sm rounded">
                     <div class="card-body">
-                        <h4 class="card-title">Form Penyewaan Mobil</h4>
+                        <h4 class="card-title">Tambah Transaksi Penyewaan</h4>
                         <?php if (!empty($error_message)): ?>
                             <div class="alert alert-danger"><?php echo $error_message; ?></div>
                         <?php endif; ?>
                         <?php if (!empty($success_message)): ?>
                             <div class="alert alert-success"><?php echo $success_message; ?></div>
                         <?php endif; ?>
-                        <form method="post">
+                        <form action="tambahtransaksi.php" method="POST">
                             <div class="form-group">
                                 <label for="mobil_id">Pilih Mobil</label>
-                                <select class="form-control" id="mobil_id" name="mobil_id">
+                                <select name="mobil_id" id="mobil_id" class="form-control">
                                     <option value="">Pilih Mobil</option>
-                                    <?php while ($row = mysqli_fetch_assoc($result_mobil)): ?>
-                                        <option value="<?php echo $row['id']; ?>"><?php echo $row['nama']." - ".$row['no_polisi']; ?></option>
+                                    <?php while ($mobil = mysqli_fetch_assoc($result_mobil)): ?>
+                                        <option value="<?php echo $mobil['id']; ?>" <?php echo ($mobil_id == $mobil['id']) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($mobil['nama']." - ".$mobil['no_polisi']); ?>
+                                        </option>
                                     <?php endwhile; ?>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="depot_id">Pilih Depot</label>
-                                <select class="form-control" id="depot_id" name="depot_id">
+                                <select name="depot_id" id="depot_id" class="form-control">
                                     <option value="">Pilih Depot</option>
-                                    <?php while ($row = mysqli_fetch_assoc($result_depot)): ?>
-                                        <option value="<?php echo $row['id']; ?>"><?php echo $row['nama']; ?></option>
+                                    <?php while ($depot = mysqli_fetch_assoc($result_depot)): ?>
+                                        <option value="<?php echo $depot['id']; ?>" <?php echo ($depot_id == $depot['id']) ? 'selected' : ''; ?>>
+                                            <?php echo $depot['nama']; ?>
+                                        </option>
                                     <?php endwhile; ?>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="supir_id">Pilih Supir</label>
-                                <select class="form-control" id="supir_id" name="supir_id">
+                                <select name="supir_id" id="supir_id" class="form-control">
                                     <option value="">Pilih Supir</option>
-                                    <?php while ($row = mysqli_fetch_assoc($result_supir)): ?>
-                                        <option value="<?php echo $row['id']; ?>"><?php echo $row['nama']; ?></option>
+                                    <?php while ($supir = mysqli_fetch_assoc($result_supir)): ?>
+                                        <option value="<?php echo $supir['id']; ?>" <?php echo ($supir_id == $supir['id']) ? 'selected' : ''; ?>>
+                                            <?php echo $supir['nama']; ?>
+                                        </option>
                                     <?php endwhile; ?>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="petugas_id">Pilih Petugas</label>
-                                <select class="form-control" id="petugas_id" name="petugas_id">
+                                <select name="petugas_id" id="petugas_id" class="form-control">
                                     <option value="">Pilih Petugas</option>
-                                    <?php while ($row = mysqli_fetch_assoc($result_petugas)): ?>
-                                        <option value="<?php echo $row['id']; ?>"><?php echo $row['nama']; ?></option>
+                                    <?php while ($petugas = mysqli_fetch_assoc($result_petugas)): ?>
+                                        <option value="<?php echo $petugas['id']; ?>" <?php echo ($petugas_id == $petugas['id']) ? 'selected' : ''; ?>>
+                                            <?php echo $petugas['nama']; ?>
+                                        </option>
                                     <?php endwhile; ?>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="tanggal_pinjam">Tanggal Pinjam</label>
-                                <input type="date" class="form-control" id="tanggal_pinjam" name="tanggal_pinjam">
+                                <input type="date" name="tanggal_pinjam" id="tanggal_pinjam" class="form-control" value="<?php echo $tanggal_pinjam; ?>">
                             </div>
                             <div class="form-group">
                                 <label for="tanggal_kembali">Tanggal Kembali</label>
-                                <input type="date" class="form-control" id="tanggal_kembali" name="tanggal_kembali">
+                                <input type="date" name="tanggal_kembali" id="tanggal_kembali" class="form-control" value="<?php echo $tanggal_kembali; ?>">
                             </div>
-                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
                         </form>
                     </div>
                 </div>

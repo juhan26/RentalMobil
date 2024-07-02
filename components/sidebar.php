@@ -11,7 +11,7 @@
         <li class="<?= ($currentPage == 'index.php') ? 'active' : '' ?>">
             <a href="index.php">
                 <i class="fas fa-home mr-1"></i>
-                <span>Dashboard</span>
+                <span>Beranda</span>
             </a>
         </li>
         <p class="mb-0">Master</p>
